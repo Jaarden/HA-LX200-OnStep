@@ -1,0 +1,84 @@
+{
+  "entity": {
+    "sensor": {
+      "local_time": {
+        "name": "Mount Time"
+      },
+      "park_status": {
+        "name": "Park Status",
+        "state": {
+          "Parked":     "Parked",
+          "Not parked": "Not parked",
+          "Parking":    "Parking",
+          "Park failed":"Park failed"
+        }
+      }
+    },
+    "binary_sensor": {
+      "guiding": {
+        "name": "Guiding"
+      },
+      "connectivity": {
+        "name": "Connection",
+        "state": {
+          "on": "Online",
+          "off": "Offline"
+        }
+      }
+    },
+    "button": {
+      "move_north":   { "name": "Move North" },
+      "move_south":   { "name": "Move South" },
+      "move_east":    { "name": "Move East" },
+      "move_west":    { "name": "Move West" },
+      "stop_motion":  { "name": "Stop Motion" },
+      "go_home":      { "name": "Go to Home" },
+      "set_home":     { "name": "Set Home" },
+      "set_park":     { "name": "Set Park Position" },
+      "sync_time":    { "name": "Sync Time" }
+    },
+    "select": {
+      "slew_rate": {
+        "name": "Slew Rate",
+        "state": {
+          "0.5x": "0.5x",
+          "1x":   "1x",
+          "2x":   "2x",
+          "4x":   "4x",
+          "8x":   "8x",
+          "20x":  "20x",
+          "48x":  "48x",
+          "Max":  "Max"
+        }
+      }
+    },
+    "switch": {
+      "tracking": {
+        "name": "Tracking"
+      },
+      "park": {
+        "name": "Parked"
+      }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "LX200 Telescope",
+        "description": "Enter the connection details for your LX200-compatible mount.",
+        "data": {
+          "host": "Host / IP address",
+          "port": "TCP port",
+          "scan_interval": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect — check the host and port.",
+      "unknown": "Unexpected error. Check the Home Assistant log for details."
+    },
+    "abort": {
+      "already_configured": "This mount is already configured."
+    }
+  }
+}
