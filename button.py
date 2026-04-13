@@ -28,8 +28,9 @@ _LOGGER = logging.getLogger(__name__)
 class TelescopeButtonDescription(ButtonEntityDescription):
     """Extends ButtonEntityDescription with the LX200 command to send."""
     command: str = ""
-    unpark_after: bool = False   # send :hR# after the main command
-    refresh_after: bool = False  # request a coordinator poll to update sensors immediately
+    unpark_after: bool = False              # send :hR# after the main command
+    follow_up_commands: tuple[str, ...] = ()# extra commands sent after the main one
+    refresh_after: bool = False             # request a coordinator poll to update sensors immediately
 
 
 BUTTON_DESCRIPTIONS: tuple[TelescopeButtonDescription, ...] = (
@@ -76,6 +77,7 @@ BUTTON_DESCRIPTIONS: tuple[TelescopeButtonDescription, ...] = (
         name="Set Home",
         icon="mdi:home-edit",
         command=":hF#",
+        follow_up_commands=(":Td#",),  # stop tracking so mount is ready to move
         refresh_after=True,
     ),
     TelescopeButtonDescription(
@@ -135,6 +137,8 @@ class TelescopeButton(ButtonEntity):
             await send_control(host, port, self.entity_description.command)
             if self.entity_description.unpark_after:
                 await send_control(host, port, ":hR#")
+            for cmd in self.entity_description.follow_up_commands:
+                await send_control(host, port, cmd)
         except CannotConnect as exc:
             _LOGGER.error(
                 "Failed to send %s to mount: %s",

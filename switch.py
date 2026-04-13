@@ -69,13 +69,11 @@ class TelescopeTrackingSwitch(CoordinatorEntity[TelescopeCoordinator], SwitchEnt
 
     @property
     def is_on(self) -> bool | None:
-        """Return tracking state from coordinator guiding flag, fall back to optimistic."""
-        if self.coordinator.data is not None:
-            # Use the guiding flag from :GU# as the real tracking state
-            if self.coordinator.data.guiding is not None:
-                return self.coordinator.data.guiding
-            if self.coordinator.data.tracking is not None:
-                return self.coordinator.data.tracking
+        """Return optimistic tracking state (last command sent).
+
+        :GU# does not expose a distinct tracking on/off flag so we track
+        state locally.  The guiding binary sensor handles the 'G' flag.
+        """
         return self._optimistic_state
 
     @property
