@@ -1,6 +1,21 @@
 {
   "entity": {
     "sensor": {
+      "ra_hms": {
+        "name": "RA (HMS)"
+      },
+      "dec_dms": {
+        "name": "DEC (DMS)"
+      },
+      "tracking_rate": {
+        "name": "Tracking Rate",
+        "state": {
+          "Sidereal": "Sidereal",
+          "Lunar":    "Lunar",
+          "Solar":    "Solar",
+          "Off":      "Off / Not Tracking"
+        }
+      },
       "local_time": {
         "name": "Mount Time"
       },

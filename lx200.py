@@ -44,6 +44,31 @@ class TelescopeData:
     park_status: str | None # Human-readable park state from :GU#
     local_time: str | None  # Local time HH:MM:SS from :GL#
     guiding: bool | None    # True when mount is guiding/tracking (:GU# 'G' flag)
+    ra_hms: str | None      # RA formatted as "HHh MMm SS.SSs"
+    dec_dms: str | None     # DEC formatted as "+DD° MM' SS.SS\""
+    tracking_rate: str | None  # "Sidereal", "Lunar", "Solar", or None
+
+
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+
+def _hours_to_hms(h: float) -> str:
+    """Convert decimal hours to a 'HHh MMm SS.SSs' string."""
+    hh = int(h)
+    mm = int((h - hh) * 60)
+    ss = ((h - hh) * 60 - mm) * 60
+    return f"{hh:02d}h {mm:02d}m {ss:05.2f}s"
+
+
+def _deg_to_dms(deg: float) -> str:
+    """Convert decimal degrees to a '+DD° MM′ SS.SS″' string."""
+    sign = "-" if deg < 0 else "+"
+    d = abs(deg)
+    dd = int(d)
+    mn = int((d - dd) * 60)
+    ss = ((d - dd) * 60 - mn) * 60
+    return f"{sign}{dd:02d}\u00b0 {mn:02d}\u2032 {ss:05.2f}\u2033"
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +154,37 @@ def _parse_guiding(raw: str | None) -> bool | None:
     return "G" in raw.strip()
 
 
+# Nominal LX200 tracking rates and midpoint classification thresholds (Hz)
+_SIDEREAL_HZ = 60.164
+_LUNAR_HZ    = 57.900
+_SOLAR_HZ    = 59.958
+_LUNAR_SOLAR_THRESH    = (_LUNAR_HZ + _SOLAR_HZ) / 2      # ≈ 58.93
+_SOLAR_SIDEREAL_THRESH = (_SOLAR_HZ + _SIDEREAL_HZ) / 2   # ≈ 60.06
+
+
+def _parse_tracking_rate(raw: str | None) -> str | None:
+    """
+    Parse the :GT# response and classify the tracking rate.
+
+    :GT# returns the tracking drive frequency in Hz.
+    Nominal values: Sidereal ≈ 60.164, Solar ≈ 59.958, Lunar ≈ 57.900.
+    Returns None when the response is missing or unparseable.
+    """
+    if not raw:
+        return None
+    try:
+        hz = float(raw.strip())
+    except ValueError:
+        return None
+    if hz <= 0.0:
+        return "Off"
+    if hz < _LUNAR_SOLAR_THRESH:
+        return "Lunar"
+    if hz < _SOLAR_SIDEREAL_THRESH:
+        return "Solar"
+    return "Sidereal"
+
+
 def _parse_tracking(raw: str | None) -> bool | None:
     """
     The :GU# status response does not include a distinct tracking on/off flag.
@@ -194,12 +250,13 @@ async def query_mount(host: str, port: int) -> TelescopeData:
             await send(":U#", has_response=False)
             ra_raw = await send(":GR#")
 
-        dec_raw      = await send(":GD#")
-        alt_raw      = await send(":GA#")
-        az_raw       = await send(":GZ#")
-        lst_raw      = await send(":GS#")
-        time_raw     = await send(":GL#")   # Local time HH:MM:SS
-        tracking_raw = await send(":GU#")   # OnStep status — includes park flags
+        dec_raw        = await send(":GD#")
+        alt_raw        = await send(":GA#")
+        az_raw         = await send(":GZ#")
+        lst_raw        = await send(":GS#")
+        time_raw       = await send(":GL#")   # Local time HH:MM:SS
+        tracking_raw   = await send(":GU#")   # OnStep status — includes park flags
+        track_rate_raw = await send(":GT#")   # Tracking rate in Hz
     finally:
         await _close(writer)
 
@@ -208,9 +265,12 @@ async def query_mount(host: str, port: int) -> TelescopeData:
     alt = _parse_dms(alt_raw  or "")
     az  = _parse_dms(az_raw   or "")
 
+    ra_rounded  = round(ra,  6) if ra  is not None else None
+    dec_rounded = round(dec, 6) if dec is not None else None
+
     return TelescopeData(
-        ra       = round(ra,  6) if ra  is not None else None,
-        dec      = round(dec, 6) if dec is not None else None,
+        ra       = ra_rounded,
+        dec      = dec_rounded,
         altitude = round(alt, 4) if alt is not None else None,
         azimuth  = round(az,  4) if az  is not None else None,
         lst      = lst_raw or None,
@@ -218,7 +278,10 @@ async def query_mount(host: str, port: int) -> TelescopeData:
         parked      = _parse_parked(tracking_raw),
         park_status = _parse_park_status(tracking_raw),
         local_time  = time_raw or None,
-        guiding     = _parse_guiding(tracking_raw),
+        guiding        = _parse_guiding(tracking_raw),
+        ra_hms         = _hours_to_hms(ra_rounded) if ra_rounded  is not None else None,
+        dec_dms        = _deg_to_dms(dec_rounded)  if dec_rounded is not None else None,
+        tracking_rate  = _parse_tracking_rate(track_rate_raw),
     )
 
 

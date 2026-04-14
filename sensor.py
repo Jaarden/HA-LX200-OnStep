@@ -50,9 +50,24 @@ SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="ra_hms",
+        name="RA (HMS)",
+        icon="mdi:telescope",
+    ),
+    SensorEntityDescription(
+        key="dec_dms",
+        name="DEC (DMS)",
+        icon="mdi:compass",
+    ),
+    SensorEntityDescription(
         key="lst",
         name="Local Sidereal Time",
         icon="mdi:clock-outline",
+    ),
+    SensorEntityDescription(
+        key="tracking_rate",
+        name="Tracking Rate",
+        icon="mdi:orbit",
     ),
     SensorEntityDescription(
         key="park_status",
