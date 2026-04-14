@@ -27,6 +27,12 @@ SLEW_RATES: dict[str, str] = {
     "Max":   ":R9#",
 }
 
+TRACKING_RATES: dict[str, str] = {
+    "Sidereal": ":TQ#",
+    "Lunar":    ":TL#",
+    "Solar":    ":TS#",
+}
+
 
 class CannotConnect(Exception):
     """Raised when the TCP connection to the mount fails."""
@@ -185,13 +191,17 @@ def _parse_tracking_rate(raw: str | None) -> str | None:
     return "Sidereal"
 
 
-def _parse_tracking(raw: str | None) -> bool | None:
+def _tracking_bool_from_rate(rate_str: str | None) -> bool | None:
     """
-    The :GU# status response does not include a distinct tracking on/off flag.
-    Tracking state is managed optimistically in the switch entity.
-    Always returns None so the switch falls back to its optimistic state.
+    Derive a tracking on/off boolean from the already-classified rate string.
+
+    :GT# returns 0 Hz when tracking is disabled and a positive rate otherwise.
+    "Off" means tracking is off; any named rate means tracking is on.
+    Returns None when the firmware did not respond (switch falls back to optimistic).
     """
-    return None
+    if rate_str is None:
+        return None
+    return rate_str != "Off"
 
 
 # ---------------------------------------------------------------------------
@@ -265,23 +275,24 @@ async def query_mount(host: str, port: int) -> TelescopeData:
     alt = _parse_dms(alt_raw  or "")
     az  = _parse_dms(az_raw   or "")
 
-    ra_rounded  = round(ra,  6) if ra  is not None else None
-    dec_rounded = round(dec, 6) if dec is not None else None
+    ra_rounded    = round(ra,  6) if ra  is not None else None
+    dec_rounded   = round(dec, 6) if dec is not None else None
+    tracking_rate = _parse_tracking_rate(track_rate_raw)
 
     return TelescopeData(
-        ra       = ra_rounded,
-        dec      = dec_rounded,
-        altitude = round(alt, 4) if alt is not None else None,
-        azimuth  = round(az,  4) if az  is not None else None,
-        lst      = lst_raw or None,
-        tracking    = _parse_tracking(tracking_raw),
-        parked      = _parse_parked(tracking_raw),
-        park_status = _parse_park_status(tracking_raw),
-        local_time  = time_raw or None,
-        guiding        = _parse_guiding(tracking_raw),
-        ra_hms         = _hours_to_hms(ra_rounded) if ra_rounded  is not None else None,
-        dec_dms        = _deg_to_dms(dec_rounded)  if dec_rounded is not None else None,
-        tracking_rate  = _parse_tracking_rate(track_rate_raw),
+        ra           = ra_rounded,
+        dec          = dec_rounded,
+        altitude     = round(alt, 4) if alt is not None else None,
+        azimuth      = round(az,  4) if az  is not None else None,
+        lst          = lst_raw or None,
+        tracking     = _tracking_bool_from_rate(tracking_rate),
+        parked       = _parse_parked(tracking_raw),
+        park_status  = _parse_park_status(tracking_raw),
+        local_time   = time_raw or None,
+        guiding      = _parse_guiding(tracking_raw),
+        ra_hms       = _hours_to_hms(ra_rounded) if ra_rounded  is not None else None,
+        dec_dms      = _deg_to_dms(dec_rounded)  if dec_rounded is not None else None,
+        tracking_rate = tracking_rate,
     )
 
 

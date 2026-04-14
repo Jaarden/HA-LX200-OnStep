@@ -65,6 +65,14 @@
           "48x":  "48x",
           "Max":  "Max"
         }
+      },
+      "tracking_rate": {
+        "name": "Tracking Mode",
+        "state": {
+          "Sidereal": "Sidereal",
+          "Lunar":    "Lunar",
+          "Solar":    "Solar"
+        }
       }
     },
     "switch": {
