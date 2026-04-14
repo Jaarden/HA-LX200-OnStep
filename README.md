@@ -190,41 +190,31 @@ Both switches become **unavailable** when the mount is offline.
 
 ![Telescope dashboard](images/dashboard1.png)
 
-The dashboard above shows live coordinates in both formatted and decimal form, mount status, park and tracking controls, and the tracking mode selector. Below is a Lovelace YAML to reproduce it:
+The dashboard shows live coordinates in formatted HMS / DMS, mount status, park and tracking controls, and the tracking mode selector. The whole card is hidden when the mount is offline.
 
-```yaml
-type: vertical-stack
-cards:
-  - type: entities
-    title: Telescope
-    entities:
-      - entity: binary_sensor.telescope_connection
-        name: Connection
-      - entity: sensor.telescope_dec_dms
-        name: DEC (DMS)
-      - entity: sensor.telescope_ra_hms
-        name: RA (HMS)
-      - entity: sensor.telescope_altitude
-        name: Altitude
-      - entity: sensor.telescope_azimuth
-        name: Azimuth
-      - entity: sensor.telescope_local_sidereal_time
-        name: Local Sidereal Time LST
-      - entity: sensor.telescope_mount_time
-        name: Synced Mount Time
+The full Lovelace YAML is in [`examples/dashboard1.yml`](examples/dashboard1.yml).
 
-  - type: entities
-    entities:
-      - entity: switch.telescope_parked
-        name: Telescope Parked
-      - entity: switch.telescope_tracking
-        name: Telescope Tracking
+### Custom card dependencies
 
-  - type: entities
-    entities:
-      - entity: select.telescope_tracking_mode
-        name: Telescope Tracking Mode
-```
+The example card uses two HACS frontend integrations:
+
+| Card | HACS repository | Purpose |
+|---|---|---|
+| [Mushroom Cards](https://github.com/piitaya/lovelace-mushroom) | `piitaya/lovelace-mushroom` | Styled header card with template subtitle and colour-coded icon |
+| [Bubble Card](https://github.com/Clooos/Bubble-Card) | `Clooos/Bubble-Card` | Compact select card for the Tracking Mode dropdown |
+
+### How the header works
+
+The `mushroom-template-card` at the top builds its subtitle from entity states:
+
+| Mount state | Subtitle shown | Icon colour |
+|---|---|---|
+| Tracking (Sidereal / Lunar / Solar) | `Online - Tracking - Sidereal` | Green |
+| Parked | `Online - Parked` | Orange |
+| Standby (tracking off, not parked) | `Online - Standby` | Blue |
+| Offline | *(whole card hidden)* | — |
+
+The Tracking Mode select card is conditionally hidden when the **Tracking** switch is off, so it only appears when there is an active tracking rate to change.
 
 ---
 

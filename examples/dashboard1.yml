@@ -1,0 +1,79 @@
+type: conditional
+conditions:
+  - condition: state
+    entity: binary_sensor.telescope_connection
+    state: "on"
+card:
+  type: vertical-stack
+  cards:
+    - type: custom:mushroom-template-card
+      primary: Telescope
+      secondary: |2+
+         {{
+         'Online - Tracking - ' + states('sensor.telescope_tracking_rate') if states('sensor.telescope_tracking_rate') == 'Sidereal' or 'Lunar' or 'Solar'
+
+        else 'Online - Parked' 
+
+        if states('sensor.telescope_park_status') == "Parked"
+         
+         else 'Online - Standby'}}
+
+      icon: mdi:telescope
+      badge_color: green
+      icon_color: |-
+        {{
+          'green' if states('sensor.telescope_tracking_rate') in ['Sidereal', 'Lunar', 'Solar']
+
+          else 'orange' if states('sensor.telescope_park_status') == 'Parked'
+          else 'blue'
+        }}
+    - type: entities
+      entities:
+        - entity: sensor.telescope_dec_dms
+          name:
+            type: entity
+        - entity: sensor.telescope_ra_hms
+          name:
+            type: entity
+        - entity: sensor.telescope_altitude
+          name:
+            type: entity
+        - entity: sensor.telescope_azimuth
+          name:
+            type: entity
+        - entity: sensor.telescope_local_sidereal_time
+          name:
+            - type: entity
+            - type: text
+              text: LST
+        - entity: sensor.telescope_mount_time
+          name:
+            - type: text
+              text: Synced
+            - type: entity
+    - type: entities
+      entities:
+        - entity: switch.telescope_parked
+        - entity: switch.telescope_tracking
+    - type: conditional
+      conditions:
+        - condition: state
+          entity: switch.telescope_tracking
+          state: "on"
+      card:
+        type: custom:bubble-card
+        card_type: select
+        entity: select.telescope_tracking_mode
+        show_attribute: false
+        show_state: true
+        styles: |
+          ha-card { 
+            font-size: 14px;
+            opacity: 1;
+            --bubble-accent-color: #D18100;
+            --bubble-state-color: #D18100;
+          }
+          .bubble-state {
+           font-size: 14px;
+            color: #D18100;
+          }
