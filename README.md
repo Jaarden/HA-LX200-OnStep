@@ -1,4 +1,6 @@
 # LX200 Telescope — Home Assistant Integration
+![LX200 & OnStep Integration](images/logo.png)
+
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![GitHub Release](https://img.shields.io/github/v/release/Jaarden/HA-LX200-OnStep)](https://github.com/Jaarden/HA-LX200-OnStep/releases)
